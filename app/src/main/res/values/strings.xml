@@ -10,6 +10,9 @@
     <string name="editor_inventory_item_activity_title">Edit Item</string>
     <string name="sale_button">Sale</string>
     <string name="order_stock_button">Order Stock</string>
+    <string name="product_picture">Take Photo</string>
+    <string name="photo">Photo</string>
+    <string name="from_file">File</string>
 
 
 </resources>

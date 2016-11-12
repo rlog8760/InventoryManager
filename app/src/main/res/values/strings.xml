@@ -15,6 +15,8 @@
     <string name="from_file">File</string>
     <string name="action_save">Save</string>
     <string name="action_delete">Delete</string>
+    <string name="saving_inventory_failed">Saving to DB failed</string>
+    <string name="saving_inventory_succeeded">Saving to DB succeeded</string>
 
 
 </resources>

@@ -3,6 +3,9 @@ package com.example.android.inventorymanager.data;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.Bitmap;
+
+import java.io.ByteArrayOutputStream;
 
 /**
  * Created by Ross on 10/11/16.
@@ -15,6 +18,12 @@ public class InventoryDbHelper extends SQLiteOpenHelper {
     public InventoryDbHelper(Context context) {
 
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    }
+
+    public static byte[] convertBitmapToBytes(Bitmap image) {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        image.compress(Bitmap.CompressFormat.PNG, 0, stream);
+        return stream.toByteArray();
     }
 
     @Override

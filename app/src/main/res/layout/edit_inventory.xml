@@ -92,6 +92,17 @@
                 android:paddingRight="16dp"
                 android:text="@string/from_file" />
 
+            <!-- Image view to show the image that the user has selected-->
+            <ImageView
+                android:id="@+id/inventory_image"
+                android:layout_width="250dp"
+                android:layout_height="200dp"
+                android:layout_marginTop="8dp"
+                android:paddingRight="16dp"
+                android:scaleType="fitXY" />
+
         </LinearLayout>
     </LinearLayout>
+
+
 </LinearLayout>

@@ -13,6 +13,8 @@
     <string name="product_picture">Take Photo</string>
     <string name="photo">Photo</string>
     <string name="from_file">File</string>
+    <string name="action_save">Save</string>
+    <string name="action_delete">Delete</string>
 
 
 </resources>

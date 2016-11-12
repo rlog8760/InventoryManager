@@ -6,9 +6,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
+import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 
 import java.io.IOException;
 
@@ -20,6 +21,8 @@ public class EditInventoryItemActivity extends AppCompatActivity {
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int SELECT_IMAGE_REQUEST = 2;
     private static final String LOG_TAG = EditInventoryItemActivity.class.getSimpleName();
+
+    private ImageView mInventoryImageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,12 +68,18 @@ public class EditInventoryItemActivity extends AppCompatActivity {
     //Image is returning a size now we need
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.edit_inventory_menu, menu);
+        return true;
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Bundle extras = data.getExtras();
             Bitmap imageBitmap = (Bitmap) extras.get("data");
-            Log.v(LOG_TAG, "Size of image returned: " + imageBitmap.getByteCount());
-            // Need to add in the code to store in the database
+            mInventoryImageView = (ImageView) findViewById(R.id.inventory_image);
+            mInventoryImageView.setImageBitmap(imageBitmap);
         }
 
         if (requestCode == SELECT_IMAGE_REQUEST && resultCode == RESULT_OK
@@ -80,8 +89,8 @@ public class EditInventoryItemActivity extends AppCompatActivity {
 
             try {
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
-                Log.v(LOG_TAG, "Size of bitmap selected: " + bitmap.getByteCount());
-                // Need to add in the code to store in the database
+                mInventoryImageView = (ImageView) findViewById(R.id.inventory_image);
+                mInventoryImageView.setImageBitmap(bitmap);
             } catch (IOException io) {
                 io.printStackTrace();
             }

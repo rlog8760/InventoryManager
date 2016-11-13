@@ -12,7 +12,7 @@ import java.io.ByteArrayOutputStream;
  */
 public class InventoryDbHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
     private static final String DATABASE_NAME = "inventory.db";
 
     public InventoryDbHelper(Context context) {
@@ -37,8 +37,7 @@ public class InventoryDbHelper extends SQLiteOpenHelper {
                 InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_NAME + " TEXT NOT NULL, " +
                 InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_QUANTITY + " INTEGER NOT NULL, " +
                 InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_PRICE + " TEXT NOT NULL, " +
-                InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_SUPPLIER + " TEXT NOT NULL, +" +
-                InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE + "BLOB);";
+                InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE + " BLOB NOT NULL);";
 
         sqLiteDatabase.execSQL(SQL_CREATE_INVENTORY_TABLE);
 

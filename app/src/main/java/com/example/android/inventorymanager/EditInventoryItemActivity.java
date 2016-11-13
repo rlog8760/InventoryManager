@@ -2,15 +2,18 @@ package com.example.android.inventorymanager;
 
 import android.app.LoaderManager;
 import android.content.ContentValues;
+import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -37,13 +40,15 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int SELECT_IMAGE_REQUEST = 2;
     private static final String LOG_TAG = EditInventoryItemActivity.class.getSimpleName();
-    /** Setting up the content URI (null if it's a new pet) */
+    /**
+     * Setting up the content URI (null if it's a new inventory item)
+     */
 
     private Uri mCurrentInventoryUri;
     private EditText mProductName;
     private EditText mProductPrice;
     private EditText mProductQuantity;
-    private ImageView mProductImage;
+    private ImageView mInventoryImageView;
     /**
      * boolean flag to keep track of whether or not the editor activity fields have been edited
      **/
@@ -55,28 +60,79 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
             return false;
         }
     };
-    private ImageView mInventoryImageView;
+
 
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-        return null;
+
+        // Since the editor shows all inventory attributes, define a projection that contains
+        // all columns from the pet table
+        String[] projection = {
+                InventoryContract.InventoryEntry._ID,
+                InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_NAME,
+                InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_PRICE,
+                InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_QUANTITY,
+                InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE};
+
+        // This loader will execute the ContentProvider's query method on a background thread
+        return new CursorLoader(this,   // Parent activity context
+                mCurrentInventoryUri,         // Query the content URI for the current pet
+                projection,             // Columns to include in the resulting Cursor
+                null,                   // No selection clause
+                null,                   // No selection arguments
+                null);                  // Default sort order
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
 
+        Log.v(LOG_TAG, "Inside onLoadFinished");
+        Log.v(LOG_TAG, "Cursor size returned: " + cursor.getCount());
+
+        // Bail early if the cursor is null or there is less than 1 row in the cursor
+        if (cursor == null || cursor.getCount() < 1) {
+            return;
+        }
+
+        // Proceed with moving to the first row of the cursor and reading data from it
+        // (This should be the only row in the cursor)
+        if (cursor.moveToFirst()) {
+            // Find the columns of pet attributes that we're interested in
+            int nameColumnIndex = cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_NAME);
+            int priceColumnIndex = cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_PRICE);
+            int quantityColumnIndex = cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_QUANTITY);
+            int imageColumnIndex = cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE);
+
+            // Extract out the value from the Cursor for the given column index
+            String name = cursor.getString(nameColumnIndex);
+            String price = cursor.getString(priceColumnIndex);
+            int quantity = cursor.getInt(quantityColumnIndex);
+            byte[] image = cursor.getBlob(imageColumnIndex);
+
+            // Update the views on the screen with the values from the database
+            mProductName.setText(name);
+            mProductPrice.setText(price);
+            mProductQuantity.setText(Integer.toString(quantity));
+            mInventoryImageView.setImageBitmap(BitmapFactory.decodeByteArray(image, 0, image.length));
+
+        }
+
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-
+        // If the loader is invalidated, clear out all the data from the input fields.
+        mProductName.setText("");
+        mProductPrice.setText("");
+        mProductQuantity.setText("");
+        // Select "Unknown" gender
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_save:
-                savePet();
+                saveInventoryItem();
                 finish();
                 return true;
         }
@@ -84,7 +140,7 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
         return true;
     }
 
-    private void savePet() {
+    private void saveInventoryItem() {
 
         // Get the value that have been entered by the user in the fields in edit activity
         String productName = mProductName.getText().toString().trim();
@@ -93,7 +149,7 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
 
         // To store the image in a database we need to convert it to a BLOB format
         // This is returning null at the moment
-        Bitmap bitmap = ((BitmapDrawable) mProductImage.getDrawable()).getBitmap();
+        Bitmap bitmap = ((BitmapDrawable) mInventoryImageView.getDrawable()).getBitmap();
         byte[] imageBlob = InventoryDbHelper.convertBitmapToBytes(bitmap);
 
         // Create a content values object where the column names are the keys and
@@ -137,6 +193,7 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
         mProductName = (EditText) findViewById(R.id.edit_product_name);
         mProductPrice = (EditText) findViewById(R.id.edit_product_price);
         mProductQuantity = (EditText) findViewById(R.id.edit_product_quantity);
+        mInventoryImageView = (ImageView) findViewById(R.id.inventory_image);
 
         // Now check if the user has started entering data on these fields
         mProductName.setOnTouchListener(mTouchListener);
@@ -192,7 +249,6 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Bundle extras = data.getExtras();
             Bitmap imageBitmap = (Bitmap) extras.get("data");
-            mInventoryImageView = (ImageView) findViewById(R.id.inventory_image);
             mInventoryImageView.setImageBitmap(imageBitmap);
         }
 
@@ -203,7 +259,6 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
 
             try {
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
-                mInventoryImageView = (ImageView) findViewById(R.id.inventory_image);
                 mInventoryImageView.setImageBitmap(bitmap);
             } catch (IOException io) {
                 io.printStackTrace();

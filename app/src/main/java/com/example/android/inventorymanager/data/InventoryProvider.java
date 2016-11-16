@@ -149,7 +149,7 @@ public class InventoryProvider extends ContentProvider {
             throw new IllegalArgumentException("Inventory item requires a valid quantity");
         }
 
-        byte[] productImage = values.getAsByteArray(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE);
+        String productImage = values.getAsString(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE);
         if (productImage == null) {
             throw new IllegalArgumentException("Inventory item requires a product image");
         }
@@ -258,7 +258,7 @@ public class InventoryProvider extends ContentProvider {
 
         if (values.containsKey(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE)) {
             // Check that the inventory item has an image assigned
-            byte[] productImage = values.getAsByteArray(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE);
+            String productImage = values.getAsString(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE);
             if (productImage == null) {
                 throw new IllegalArgumentException("Inventory item requires a product image");
             }

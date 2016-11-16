@@ -17,6 +17,7 @@
     <string name="action_delete">Delete</string>
     <string name="saving_inventory_failed">Saving to DB failed</string>
     <string name="saving_inventory_succeeded">Saving to DB succeeded</string>
+    <string name="check_fields_prompt">Check all fields in the form were entered correctly</string>
 
 
 </resources>

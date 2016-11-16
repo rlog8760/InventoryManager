@@ -45,14 +45,15 @@
             <EditText
                 android:id="@+id/edit_product_price"
                 style="@style/EditorFieldStyle"
+                android:digits="0123456789."
                 android:hint="@string/hint_product_price"
-                android:inputType="textCapWords" />
+                android:inputType="numberDecimal" />
 
             <EditText
                 android:id="@+id/edit_product_quantity"
                 style="@style/EditorFieldStyle"
                 android:hint="@string/hint_product_quantity"
-                android:inputType="textCapWords" />
+                android:inputType="number" />
 
         </LinearLayout>
         </LinearLayout>

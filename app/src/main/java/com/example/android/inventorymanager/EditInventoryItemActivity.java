@@ -6,12 +6,11 @@ import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -24,9 +23,11 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.example.android.inventorymanager.data.InventoryContract;
-import com.example.android.inventorymanager.data.InventoryDbHelper;
 
+import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created by Ross on 08/11/16.
@@ -49,6 +50,9 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
     private EditText mProductPrice;
     private EditText mProductQuantity;
     private ImageView mInventoryImageView;
+    private String imageViewUri;
+    private String mCurrentPhotoPath;
+    private Uri mCurrentPhotoUri;
     /**
      * boolean flag to keep track of whether or not the editor activity fields have been edited
      **/
@@ -97,7 +101,7 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
         // Proceed with moving to the first row of the cursor and reading data from it
         // (This should be the only row in the cursor)
         if (cursor.moveToFirst()) {
-            // Find the columns of pet attributes that we're interested in
+            // Find the columns of inventory attributes that we're interested in
             int nameColumnIndex = cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_NAME);
             int priceColumnIndex = cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_PRICE);
             int quantityColumnIndex = cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_QUANTITY);
@@ -107,13 +111,15 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
             String name = cursor.getString(nameColumnIndex);
             String price = cursor.getString(priceColumnIndex);
             int quantity = cursor.getInt(quantityColumnIndex);
-            byte[] image = cursor.getBlob(imageColumnIndex);
+            String image = cursor.getString(imageColumnIndex);
+            Uri imageUri = Uri.parse(image);
+
 
             // Update the views on the screen with the values from the database
             mProductName.setText(name);
             mProductPrice.setText(price);
             mProductQuantity.setText(Integer.toString(quantity));
-            mInventoryImageView.setImageBitmap(BitmapFactory.decodeByteArray(image, 0, image.length));
+            mInventoryImageView.setImageURI(imageUri);
 
         }
 
@@ -146,11 +152,7 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
         String productName = mProductName.getText().toString().trim();
         String productPrice = mProductPrice.getText().toString().trim();
         String productQuantity = mProductQuantity.getText().toString().trim();
-
-        // To store the image in a database we need to convert it to a BLOB format
-        // This is returning null at the moment
-        Bitmap bitmap = ((BitmapDrawable) mInventoryImageView.getDrawable()).getBitmap();
-        byte[] imageBlob = InventoryDbHelper.convertBitmapToBytes(bitmap);
+        String productImage = imageViewUri;
 
         // Create a content values object where the column names are the keys and
         // the values from the fields in the editor activity are the keys
@@ -158,9 +160,17 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
         contentValues.put(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_NAME, productName);
         contentValues.put(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_PRICE, productPrice);
         contentValues.put(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_QUANTITY, productQuantity);
-        contentValues.put(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE, imageBlob);
+        contentValues.put(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE, productImage);
 
-        Uri inventoryUri = getContentResolver().insert(InventoryContract.InventoryEntry.CONTENT_URI, contentValues);
+        Uri inventoryUri = null;
+
+        try {
+            inventoryUri = getContentResolver().insert(InventoryContract.InventoryEntry.CONTENT_URI, contentValues);
+        } catch (IllegalArgumentException arg) {
+            Log.v(LOG_TAG, "Exception has been thrown trying to insert to db - check data has been entered into all fields");
+            Toast.makeText(this, getString(R.string.check_fields_prompt), Toast.LENGTH_SHORT).show();
+            arg.printStackTrace();
+        }
 
         if (inventoryUri == null) {
             // If the new content URI is null, then there was an error with insertion.
@@ -222,15 +232,33 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
 
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+                ex.printStackTrace();
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "com.example.android.fileprovider",
+                        photoFile);
+                mCurrentPhotoUri = photoURI;
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+            }
         }
     }
 
     private void dispatchSelectPictureIntent() {
         Intent selectPictureIntent = new Intent();
         selectPictureIntent.setType("image/*");
-        selectPictureIntent.setAction(Intent.ACTION_GET_CONTENT);
+        selectPictureIntent.setAction(Intent.ACTION_OPEN_DOCUMENT);
+        selectPictureIntent.addCategory(Intent.CATEGORY_OPENABLE);
         startActivityForResult(Intent.createChooser(selectPictureIntent, "Select Picture"),
                 SELECT_IMAGE_REQUEST);
 
@@ -247,9 +275,8 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            mInventoryImageView.setImageBitmap(imageBitmap);
+            mInventoryImageView.setImageURI(mCurrentPhotoUri);
+            imageViewUri = mCurrentPhotoUri.toString();
         }
 
         if (requestCode == SELECT_IMAGE_REQUEST && resultCode == RESULT_OK
@@ -258,11 +285,27 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
             Uri uri = data.getData();
 
             try {
-                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
-                mInventoryImageView.setImageBitmap(bitmap);
-            } catch (IOException io) {
-                io.printStackTrace();
+                mInventoryImageView.setImageURI(uri);
+                imageViewUri = uri.toString();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
+    }
+
+    private File createImageFile() throws IOException {
+        //Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        mCurrentPhotoPath = "file:" + image.getAbsolutePath();
+        return image;
     }
 }

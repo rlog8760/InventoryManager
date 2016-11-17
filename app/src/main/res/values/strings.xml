@@ -18,6 +18,21 @@
     <string name="saving_inventory_failed">Saving to DB failed</string>
     <string name="saving_inventory_succeeded">Saving to DB succeeded</string>
     <string name="check_fields_prompt">Check all fields in the form were entered correctly</string>
+    <string name="unsaved_changes_dialog_msg">Discard your changes and quit editing?</string>
+    <string name="discard">Discard</string>
+    <string name="keep_editing">Keep Editing</string>
+    <string name="editor_update_inventory_failed">Update failed</string>
+    <string name="editor_update_inventory_successful">Update succeeded</string>
+    <string name="delete_dialog_msg">Are you sure you want to delete?</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="editor_delete_inventory_failed">Delete failed</string>
+    <string name="editor_delete_inventory_successful">Delete succeeded</string>
+
+
+    builder.setMessage(R.string.unsaved_changes_dialog_msg);
+    builder.setPositiveButton(R.string.discard, discardButtonClickListener);
+    builder.setNegativeButton(R.string.keep_editing, new DialogInterface.OnClickListener() {
 
 
 </resources>

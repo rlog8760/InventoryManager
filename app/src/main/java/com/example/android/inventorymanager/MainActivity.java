@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 Intent intent = new Intent(MainActivity.this, EditInventoryItemActivity.class);
 
                 Uri currentInventoryUri = ContentUris.withAppendedId(InventoryContract.InventoryEntry.CONTENT_URI, id);
-                Log.v("MainActivity", "Current inventory ur: " + currentInventoryUri);
+                Log.v("MainActivity", "Current inventory uri: " + currentInventoryUri);
 
                 intent.setData(currentInventoryUri);
 
@@ -71,7 +71,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 InventoryContract.InventoryEntry._ID,
                 InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_NAME,
                 InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_PRICE,
-                InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_QUANTITY
+                InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_QUANTITY,
+                InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE,
+                InventoryContract.InventoryEntry.COLUMN_INVENTORY_SUPPLIER_EMAIL
         };
 
         return new CursorLoader(this,

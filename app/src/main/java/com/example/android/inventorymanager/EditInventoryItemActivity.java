@@ -400,22 +400,7 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
         saleButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                int productQuantValue = 0;
-                try {
-                    productQuantValue = Integer.parseInt(mProductQuantity.getText().toString());
-                } catch (NumberFormatException nfe) {
-                    Log.v(LOG_TAG, "No value has been entered for the quantity so a sale cannot be tracked at this stage." +
-                            "Please enter a value and then save to the db");
-                }
-
-                if (productQuantValue > 0) {
-                    productQuantValue -= 1;
-                    mProductQuantity.setText(String.valueOf(productQuantValue));
-                } else {
-                    Toast.makeText(getApplicationContext(), "The sale cannot be fulfilled as there is no stock. Please order" +
-                                    " a shipment before trying again",
-                            Toast.LENGTH_SHORT).show();
-                }
+                handleItemSale();
             }
         });
 
@@ -458,6 +443,25 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
         });
 
 
+    }
+
+    private void handleItemSale() {
+        int productQuantValue = 0;
+        try {
+            productQuantValue = Integer.parseInt(mProductQuantity.getText().toString());
+        } catch (NumberFormatException nfe) {
+            Log.v(LOG_TAG, "No value has been entered for the quantity so a sale cannot be tracked at this stage." +
+                    "Please enter a value and then save to the db");
+        }
+
+        if (productQuantValue > 0) {
+            productQuantValue -= 1;
+            mProductQuantity.setText(String.valueOf(productQuantValue));
+        } else {
+            Toast.makeText(getApplicationContext(), "The sale cannot be fulfilled as there is no stock. Please order" +
+                            " a shipment before trying again",
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void dispatchTakePictureIntent() {

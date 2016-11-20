@@ -15,7 +15,9 @@ import android.provider.MediaStore;
 import android.support.v4.app.NavUtils;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
+import android.text.InputType;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -54,6 +56,7 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
     private EditText mProductQuantity;
     private ImageView mInventoryImageView;
     private String imageViewUri;
+    private EditText mSupplierEmail;
     private String mCurrentPhotoPath;
     private Uri mCurrentPhotoUri;
     /**
@@ -73,17 +76,18 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
 
         // Since the editor shows all inventory attributes, define a projection that contains
-        // all columns from the pet table
+        // all columns from the inventory table
         String[] projection = {
                 InventoryContract.InventoryEntry._ID,
                 InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_NAME,
                 InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_PRICE,
                 InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_QUANTITY,
-                InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE};
+                InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE,
+                InventoryContract.InventoryEntry.COLUMN_INVENTORY_SUPPLIER_EMAIL};
 
         // This loader will execute the ContentProvider's query method on a background thread
         return new CursorLoader(this,   // Parent activity context
-                mCurrentInventoryUri,         // Query the content URI for the current pet
+                mCurrentInventoryUri,         // Query the content URI for the current inventory
                 projection,             // Columns to include in the resulting Cursor
                 null,                   // No selection clause
                 null,                   // No selection arguments
@@ -109,6 +113,7 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
             int priceColumnIndex = cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_PRICE);
             int quantityColumnIndex = cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_QUANTITY);
             int imageColumnIndex = cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE);
+            int supplierColumnIndex = cursor.getColumnIndex(InventoryContract.InventoryEntry.COLUMN_INVENTORY_SUPPLIER_EMAIL);
 
             // Extract out the value from the Cursor for the given column index
             String name = cursor.getString(nameColumnIndex);
@@ -116,6 +121,7 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
             int quantity = cursor.getInt(quantityColumnIndex);
             String image = cursor.getString(imageColumnIndex);
             Uri imageUri = Uri.parse(image);
+            String supplierEmail = cursor.getString(supplierColumnIndex);
 
 
             // Update the views on the screen with the values from the database
@@ -124,6 +130,8 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
             mProductQuantity.setText(Integer.toString(quantity));
             mInventoryImageView.setImageURI(imageUri);
             imageViewUri = imageUri.toString();
+            mSupplierEmail.setText(supplierEmail);
+
 
         }
 
@@ -149,7 +157,7 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
                 showDeleteConfirmationDialog();
                 return true;
             case android.R.id.home:
-                if (!mInventoryFieldsChanged && imageViewUri == null) {
+                if (!mInventoryFieldsChanged) {
                     NavUtils.navigateUpFromSameTask(EditInventoryItemActivity.this);
                     return true;
                 }
@@ -181,14 +189,14 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
         builder.setMessage(R.string.delete_dialog_msg);
         builder.setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-                // User clicked the "Delete" button, so delete the pet.
-                deletePet();
+                // User clicked the "Delete" button, so delete the inventory item.
+                deleteItem();
             }
         });
         builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 // User clicked the "Cancel" button, so dismiss the dialog
-                // and continue editing the pet.
+                // and continue editing the inventory item.
                 if (dialog != null) {
                     dialog.dismiss();
                 }
@@ -201,14 +209,14 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
     }
 
     /**
-     * Perform the deletion of the pet in the database.
+     * Perform the deletion of the inventory item in the database.
      */
-    private void deletePet() {
-        // Only perform the delete if this is an existing pet.
+    private void deleteItem() {
+        // Only perform the delete if this is an existing inventory item
         if (mCurrentInventoryUri != null) {
-            // Call the ContentResolver to delete the pet at the given content URI.
-            // Pass in null for the selection and selection args because the mCurrentPetUri
-            // content URI already identifies the pet that we want.
+            // Call the ContentResolver to delete the inventory item at the given content URI.
+            // Pass in null for the selection and selection args because the mCurrentInventoryUri
+            // content URI already identifies the inventory item that we want.
             int rowsDeleted = getContentResolver().delete(mCurrentInventoryUri, null, null);
 
             // Show a toast message depending on whether or not the delete was successful.
@@ -244,7 +252,7 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
         builder.setNegativeButton(R.string.keep_editing, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 // User clicked the "Keep editing" button, so dismiss the dialog
-                // and continue editing the pet.
+                // and continue editing the inventory item
                 if (dialog != null) {
                     dialog.dismiss();
                 }
@@ -263,6 +271,7 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
         String productPrice = mProductPrice.getText().toString().trim();
         String productQuantity = mProductQuantity.getText().toString().trim();
         String productImage = imageViewUri;
+        String supplierEmail = mSupplierEmail.getText().toString().trim();
 
         // Create a content values object where the column names are the keys and
         // the values from the fields in the editor activity are the keys
@@ -271,6 +280,7 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
         contentValues.put(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_PRICE, productPrice);
         contentValues.put(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_QUANTITY, productQuantity);
         contentValues.put(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE, productImage);
+        contentValues.put(InventoryContract.InventoryEntry.COLUMN_INVENTORY_SUPPLIER_EMAIL, supplierEmail);
 
         if (mCurrentInventoryUri == null) {
 
@@ -280,7 +290,6 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
                 inventoryUri = getContentResolver().insert(InventoryContract.InventoryEntry.CONTENT_URI, contentValues);
             } catch (IllegalArgumentException arg) {
                 Log.v(LOG_TAG, "Exception has been thrown trying to insert to db - check data has been entered into all fields");
-                Toast.makeText(this, getString(R.string.check_fields_prompt), Toast.LENGTH_SHORT).show();
                 arg.printStackTrace();
             }
 
@@ -288,6 +297,7 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
                 // If the new content URI is null, then there was an error with insertion.
                 Toast.makeText(this, getString(R.string.saving_inventory_failed),
                         Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.check_fields_prompt), Toast.LENGTH_SHORT).show();
             } else {
                 // Otherwise, the insertion was successful and we can display a toast.
                 Toast.makeText(this, getString(R.string.saving_inventory_succeeded),
@@ -295,17 +305,23 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
             }
         } else {
 
-            // Otherwise this is an EXISTING pet, so update the pet with content URI: mCurrentPetUri
+            // Otherwise this is an EXISTING inventory item, so update the inventory item with content URI: mCurrentInventoryUri
             // and pass in the new ContentValues. Pass in null for the selection and selection args
-            // because mCurrentPetUri will already identify the correct row in the database that
+            // because mCurrentInventoryUri will already identify the correct row in the database that
             // we want to modify.
-            int rowsAffected = getContentResolver().update(mCurrentInventoryUri, contentValues, null, null);
+            int rowsAffected = 0;
+            try {
+                rowsAffected = getContentResolver().update(mCurrentInventoryUri, contentValues, null, null);
+            } catch (IllegalArgumentException iae) {
+                Log.v(LOG_TAG, "Illegal argument exception was thrown. One of the fields entered in the form was invalid");
+            }
 
             // Show a toast message depending on whether or not the update was successful.
             if (rowsAffected == 0) {
                 // If no rows were affected, then there was an error with the update.
                 Toast.makeText(this, getString(R.string.editor_update_inventory_failed),
                         Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "One of the fields in the edit form was invalid", Toast.LENGTH_SHORT).show();
             } else {
                 // Otherwise, the update was successful and we can display a toast.
                 Toast.makeText(this, getString(R.string.saving_inventory_succeeded),
@@ -336,11 +352,13 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
         mProductPrice = (EditText) findViewById(R.id.edit_product_price);
         mProductQuantity = (EditText) findViewById(R.id.edit_product_quantity);
         mInventoryImageView = (ImageView) findViewById(R.id.inventory_image);
+        mSupplierEmail = (EditText) findViewById(R.id.edit_supplier_email);
 
         // Now check if the user has started entering data on these fields
         mProductName.setOnTouchListener(mTouchListener);
         mProductPrice.setOnTouchListener(mTouchListener);
         mProductQuantity.setOnTouchListener(mTouchListener);
+        mSupplierEmail.setOnTouchListener(mTouchListener);
 
 
         //Button to take a photo for the database entry
@@ -360,6 +378,85 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
                 dispatchSelectPictureIntent();
             }
         });
+
+        //Button to place an order to the supplier for more stock
+        Button orderButton = (Button) findViewById(R.id.make_order);
+        orderButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(Intent.ACTION_SENDTO);
+                intent.setData(Uri.parse("mailto:")); // only email apps should handle this
+                String[] emailAddresses = new String[]{mSupplierEmail.getText().toString()};
+                intent.putExtra(Intent.EXTRA_EMAIL, emailAddresses);
+                intent.putExtra(Intent.EXTRA_SUBJECT, mProductName.getText().toString() + " Shipment Order");
+                if (intent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(intent);
+                }
+            }
+        });
+
+        //Button to track a sale of the item
+        Button saleButton = (Button) findViewById(R.id.sale_button);
+        saleButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int productQuantValue = 0;
+                try {
+                    productQuantValue = Integer.parseInt(mProductQuantity.getText().toString());
+                } catch (NumberFormatException nfe) {
+                    Log.v(LOG_TAG, "No value has been entered for the quantity so a sale cannot be tracked at this stage." +
+                            "Please enter a value and then save to the db");
+                }
+
+                if (productQuantValue > 0) {
+                    productQuantValue -= 1;
+                    mProductQuantity.setText(String.valueOf(productQuantValue));
+                } else {
+                    Toast.makeText(getApplicationContext(), "The sale cannot be fulfilled as there is no stock. Please order" +
+                                    " a shipment before trying again",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        //Button to receive a shipment of stock for a particular item
+        Button shipmentButton = (Button) findViewById(R.id.receive_shipment);
+        shipmentButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                AlertDialog.Builder shipmentAlert = new AlertDialog.Builder(EditInventoryItemActivity.this);
+                final EditText shipmentNumber = new EditText(EditInventoryItemActivity.this);
+                shipmentNumber.setInputType(InputType.TYPE_CLASS_NUMBER);
+                shipmentNumber.setGravity(Gravity.CENTER_HORIZONTAL);
+                shipmentAlert.setMessage("Please enter the amount of stock received in the shipment");
+                shipmentAlert.setTitle("Shipment Received");
+                shipmentAlert.setView(shipmentNumber);
+
+
+                shipmentAlert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        String shipmentQuantityValue = shipmentNumber.getText().toString();
+                        if (!shipmentQuantityValue.trim().isEmpty()) {
+                            int productQuantityValue = Integer.parseInt(mProductQuantity.getText().toString());
+                            productQuantityValue += Integer.parseInt(shipmentQuantityValue);
+                            mProductQuantity.setText(String.valueOf(productQuantityValue));
+                        }
+                    }
+                });
+
+                shipmentAlert.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        if (dialogInterface != null) {
+                            dialogInterface.dismiss();
+                        }
+                    }
+                });
+                shipmentAlert.show();
+            }
+        });
+
 
     }
 
@@ -410,6 +507,7 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             mInventoryImageView.setImageURI(mCurrentPhotoUri);
             imageViewUri = mCurrentPhotoUri.toString();
+            mInventoryFieldsChanged = true;
         }
 
         if (requestCode == SELECT_IMAGE_REQUEST && resultCode == RESULT_OK
@@ -420,6 +518,7 @@ public class EditInventoryItemActivity extends AppCompatActivity implements Load
             try {
                 mInventoryImageView.setImageURI(uri);
                 imageViewUri = uri.toString();
+                mInventoryFieldsChanged = true;
             } catch (Exception e) {
                 e.printStackTrace();
             }

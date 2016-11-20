@@ -41,18 +41,18 @@ public class InventoryProvider extends ContentProvider {
         // should recognize. All paths added to the UriMatcher have a corresponding code to return
         // when a match is found.
 
-        // The content URI of the form "content://com.example.android.pets/pets" will map to the
-        // integer code {@link #PETS}. This URI is used to provide access to MULTIPLE rows
-        // of the pets table.
+        // The content URI of the form "content://com.example.android.inventorymanager/inventory" will map to the
+        // integer code {@link #}. This URI is used to provide access to MULTIPLE rows
+        // of the inventory table.
         sUriMatcher.addURI(InventoryContract.CONTENT_AUTHORITY, InventoryContract.PATH_INVENTORY_ITEMS, INVENTORY);
 
-        // The content URI of the form "content://com.example.android.pets/pets/#" will map to the
-        // integer code {@link #PET_ID}. This URI is used to provide access to ONE single row
-        // of the pets table.
+        // The content URI of the form "content://com.example.android.inventorymanager/inventory/#" will map to the
+        // integer code {@link #INVENTORY_ID}. This URI is used to provide access to ONE single row
+        // of the inventory table.
         //
         // In this case, the "#" wildcard is used where "#" can be substituted for an integer.
-        // For example, "content://com.example.android.pets/pets/3" matches, but
-        // "content://com.example.android.pets/pets" (without a number at the end) doesn't match.
+        // For example, "content://com.example.android.inventorymanager/inventory/3" matches, but
+        // "content://com.example.android.inventorymanager/inventory" (without a number at the end) doesn't match.
         sUriMatcher.addURI(InventoryContract.CONTENT_AUTHORITY, InventoryContract.PATH_INVENTORY_ITEMS + "/#", INVENTORY_ID);
     }
 
@@ -79,15 +79,15 @@ public class InventoryProvider extends ContentProvider {
         int match = sUriMatcher.match(uri);
         switch (match) {
             case INVENTORY:
-                // For the PETS code, query the pets table directly with the given
+                // For the Inventory code, query the Inventory table directly with the given
                 // projection, selection, selection arguments, and sort order. The cursor
-                // could contain multiple rows of the pets table.
+                // could contain multiple rows of the inventory table.
                 cursor = database.query(InventoryContract.InventoryEntry.TABLE_NAME, projection, selection, selectionArgs,
                         null, null, sortOrder);
                 break;
             case INVENTORY_ID:
-                // For the PET_ID code, extract out the ID from the URI.
-                // For an example URI such as "content://com.example.android.pets/pets/3",
+                // For the Inventory_ID code, extract out the ID from the URI.
+                // For an example URI such as "content://com.example.android.inventorymanager/inventory/3",
                 // the selection will be "_id=?" and the selection argument will be a
                 // String array containing the actual ID of 3 in this case.
                 //
@@ -97,7 +97,7 @@ public class InventoryProvider extends ContentProvider {
                 selection = InventoryContract.InventoryEntry._ID + "=?";
                 selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
 
-                // This will perform a query on the pets table where the _id equals 3 to return a
+                // This will perform a query on the inventory table where the _id equals 3 to return a
                 // Cursor containing that row of the table.
                 cursor = database.query(InventoryContract.InventoryEntry.TABLE_NAME, projection, selection, selectionArgs,
                         null, null, sortOrder);
@@ -134,13 +134,13 @@ public class InventoryProvider extends ContentProvider {
 
         // Check that the name is not null
         String name = values.getAsString(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_NAME);
-        if (name == null) {
+        if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Inventory item requires a name");
         }
 
         //Check that the product price is not null
         String productPrice = values.getAsString(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_PRICE);
-        if (productPrice == null) {
+        if (productPrice == null || productPrice.isEmpty()) {
             throw new IllegalArgumentException("Inventory item requires a valid price");
         }
 
@@ -150,14 +150,19 @@ public class InventoryProvider extends ContentProvider {
         }
 
         String productImage = values.getAsString(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE);
-        if (productImage == null) {
+        if (productImage == null || productImage.isEmpty()) {
             throw new IllegalArgumentException("Inventory item requires a product image");
+        }
+
+        String supplierEmail = values.getAsString(InventoryContract.InventoryEntry.COLUMN_INVENTORY_SUPPLIER_EMAIL);
+        if (supplierEmail == null || supplierEmail.isEmpty()) {
+            throw new IllegalArgumentException("Inventory item requires a supplier email");
         }
 
         // Get writeable database
         SQLiteDatabase database = mDbHelper.getWritableDatabase();
 
-        // Insert the new pet with the given values
+        // Insert the new invenory item with the given values
         long id = database.insert(InventoryContract.InventoryEntry.TABLE_NAME, null, values);
         // If the ID is -1, then the insertion failed. Log an error and return null.
         if (id == -1) {
@@ -165,7 +170,7 @@ public class InventoryProvider extends ContentProvider {
             return null;
         }
 
-        // Notify all listeners that the data has changed for the pet content URI
+        // Notify all listeners that the data has changed for the inventory content URI
         getContext().getContentResolver().notifyChange(uri, null);
 
         // Return the new URI with the ID (of the newly inserted row) appended at the end
@@ -213,7 +218,7 @@ public class InventoryProvider extends ContentProvider {
             case INVENTORY:
                 return updateInventoryItem(uri, contentValues, selection, selectionArgs);
             case INVENTORY_ID:
-                // For the PET_ID code, extract out the ID from the URI,
+                // For the INVENTORY_ID code, extract out the ID from the URI,
                 // so we know which row to update. Selection will be "_id=?" and selection
                 // arguments will be a String array containing the actual ID.
                 selection = InventoryContract.InventoryEntry._ID + "=?";
@@ -225,28 +230,25 @@ public class InventoryProvider extends ContentProvider {
     }
 
     /**
-     * Update pets in the database with the given content values. Apply the changes to the rows
-     * specified in the selection and selection arguments (which could be 0 or 1 or more pets).
+     * Update inventory items in the database with the given content values. Apply the changes to the rows
+     * specified in the selection and selection arguments (which could be 0 or 1 or more inventory item).
      * Return the number of rows that were successfully updated.
      */
     private int updateInventoryItem(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
-        // If the {@link PetEntry#COLUMN_PET_NAME} key is present,
-        // check that the name value is not null.
+
         if (values.containsKey(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_NAME)) {
             String productName = values.getAsString(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_NAME);
-            if (productName == null) {
+            if (productName == null || productName.isEmpty()) {
                 throw new IllegalArgumentException("Inventory item requires a productName");
             }
         }
 
-
         if (values.containsKey(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_PRICE)) {
             String productPrice = values.getAsString(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_PRICE);
-            if (productPrice == null) {
+            if (productPrice == null || productPrice.isEmpty()) {
                 throw new IllegalArgumentException("Inventory item requires a price");
             }
         }
-
 
         if (values.containsKey(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_QUANTITY)) {
             // Check that the weight is greater than or equal to 0 kg
@@ -259,10 +261,17 @@ public class InventoryProvider extends ContentProvider {
         if (values.containsKey(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE)) {
             // Check that the inventory item has an image assigned
             String productImage = values.getAsString(InventoryContract.InventoryEntry.COLUMN_INVENTORY_ITEM_IMAGE);
-            if (productImage == null) {
+            if (productImage == null || productImage.isEmpty()) {
                 throw new IllegalArgumentException("Inventory item requires a product image");
             }
+        }
 
+        if (values.containsKey(InventoryContract.InventoryEntry.COLUMN_INVENTORY_SUPPLIER_EMAIL)) {
+            //Check that the inventory item has a supplier email assigned
+            String supplierEmail = values.getAsString(InventoryContract.InventoryEntry.COLUMN_INVENTORY_SUPPLIER_EMAIL);
+            if (supplierEmail == null || supplierEmail.isEmpty()) {
+                throw new IllegalArgumentException("Inventory item requires a supplier email");
+            }
         }
 
         // If there are no values to update, then don't try to update the database

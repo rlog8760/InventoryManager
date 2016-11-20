@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">InventoryManager</string>
+    <string name="app_name">Inventory Manager</string>
     <string name="empty_view_title_text">No items in inventory</string>
     <string name="empty_view_subtitle_text">To add an item, click on the button below</string>
     <string name="hint_product_name">Name</string>
@@ -28,11 +28,14 @@
     <string name="cancel">Cancel</string>
     <string name="editor_delete_inventory_failed">Delete failed</string>
     <string name="editor_delete_inventory_successful">Delete succeeded</string>
-
-
-    builder.setMessage(R.string.unsaved_changes_dialog_msg);
-    builder.setPositiveButton(R.string.discard, discardButtonClickListener);
-    builder.setNegativeButton(R.string.keep_editing, new DialogInterface.OnClickListener() {
+    <string name="inventory_item">Item: </string>
+    <string name="inventory_item_quantity">Quantity: </string>
+    <string name="inventory_item_price">Price: </string>
+    <string name="inventory_item_actions">Actions</string>
+    <string name="inventory_item_sale">Sale</string>
+    <string name="inventory_item_receive_shipment">Shipment</string>
+    <string name="inventory_item_make_order">Order</string>
+    <string name="inventory_supplier_email_title">Supplier</string>
 
 
 </resources>

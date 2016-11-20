@@ -10,6 +10,8 @@ import android.widget.TextView;
 
 import com.example.android.inventorymanager.data.InventoryContract;
 
+import java.text.DecimalFormat;
+
 /**
  * Created by Ross on 13/11/16.
  */
@@ -41,10 +43,14 @@ public class InventoryCursorAdapter extends CursorAdapter {
         String inventoryProductPrice = cursor.getString(productPriceColumnIndex);
         int inventoryProductQuantity = cursor.getInt(productQuantityColumnIndex);
 
+        Double price = Double.valueOf(inventoryProductPrice);
+        DecimalFormat df = new DecimalFormat("0.00");
+        String formattedPrice = "£" + df.format(price);
+
         // Populate fields with extracted properties
-        productName.setText(inventoryProductName);
-        productPrice.setText(inventoryProductPrice);
-        productQuantity.setText(Integer.toString(inventoryProductQuantity));
+        productName.setText(view.getResources().getString(R.string.inventory_item) + " " + inventoryProductName);
+        productPrice.setText(view.getResources().getString(R.string.inventory_item_price) + " " + formattedPrice);
+        productQuantity.setText(view.getResources().getString(R.string.inventory_item_quantity) + " " + Integer.toString(inventoryProductQuantity));
 
     }
 }

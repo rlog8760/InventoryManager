@@ -9,7 +9,13 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 --><!-- Layout for the editor -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:descendantFocusability="beforeDescendants"
+    android:focusableInTouchMode="true">
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -55,10 +61,15 @@
                 android:hint="@string/hint_product_quantity"
                 android:inputType="number" />
 
+            <EditText
+                android:id="@+id/edit_supplier_email"
+                style="@style/EditorFieldStyle"
+                android:hint="@string/inventory_supplier_email_title"
+                android:inputType="textEmailAddress" />
+
         </LinearLayout>
         </LinearLayout>
 
-    <!-- Gender category -->
     <LinearLayout
         android:id="@+id/container_product_photo"
         android:layout_width="match_parent"
@@ -105,5 +116,49 @@
         </LinearLayout>
     </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/container_item_actions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
+            <!-- Label -->
+            <TextView
+                style="@style/CategoryStyle"
+                android:text="@string/inventory_item_actions" />
+
+            <!-- Input field -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:orientation="vertical">
+
+                <!-- Track Sale Button -->
+                <Button
+                    android:id="@+id/sale_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingRight="16dp"
+                    android:text="@string/inventory_item_sale" />
+
+                <!-- Receive Shipment Button -->
+                <Button
+                    android:id="@+id/receive_shipment"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingRight="16dp"
+                    android:text="@string/inventory_item_receive_shipment" />
+
+                <!-- Make Order Button -->
+                <Button
+                    android:id="@+id/make_order"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingRight="16dp"
+                    android:text="@string/inventory_item_make_order" />
+
+            </LinearLayout>
+        </LinearLayout>
 </LinearLayout>
+</ScrollView>
